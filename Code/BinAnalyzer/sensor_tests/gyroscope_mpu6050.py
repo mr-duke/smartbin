@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#erst terminal: sudo apt-get install ...
+# erst terminal: sudo apt-get install ...
 import smbus
 import math
 
