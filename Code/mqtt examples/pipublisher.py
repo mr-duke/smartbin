@@ -2,30 +2,26 @@ import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 from time import sleep
 
-rot = 18
-gruen = 15
+pin = 23
 client = mqtt.Client()
 
 def on_connect(client, userdata, flags, rc):
-    GPIO.output(gruen, GPIO.HIGH)
-    sleep(1)
-    GPIO.output(gruen, GPIO.LOW)
+    client.publish("connected")
 
 def init():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(rot, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.setup(gruen, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(pin, GPIO.IN)
     client.on_connect = on_connect
-    client.connect("iot.eclipse.org", 1883, 60)
+    client.connect("104.45.70.122", 1883, 60)
     client.loop_start()
 
 def run():
-    message = input()
-    client.publish("test/pi", message)
-    GPIO.output(gruen, GPIO.HIGH)
-    sleep(0.25)
-    GPIO.output(gruen, GPIO.LOW)
+    if GPIO.input(pin) == GPIO.HIGH:
+            client.publish("test/pi", "Unterbrochen")
+    else:
+        client.publish("test/pi", "Offen")
+    sleep(1)
 
 if __name__ == '__main__':
     init()
