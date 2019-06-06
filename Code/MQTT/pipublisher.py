@@ -1,27 +1,15 @@
 import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 from time import sleep
+import RPi.GPIO as GPIO
+import os
+import time
 
-pin = 23
+RECEIVER_PIN = 23
 client = mqtt.Client()
 
-def on_connect(client, userdata, flags, rc):
-    client.publish("connected")
+# Main function
 
-def init():
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(pin, GPIO.IN)
-    client.on_connect = on_connect
-    client.connect("104.45.70.122", 1883, 60)
-    client.loop_start()
-
-def run():
-    if GPIO.input(pin) == GPIO.HIGH:
-            client.publish("test/pi", "Unterbrochen")
-    else:
-        client.publish("test/pi", "Offen")
-    sleep(1)
 
 if __name__ == '__main__':
     init()
@@ -31,3 +19,33 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("stopped by user")
     GPIO.cleanup()
+
+# Event handler
+
+
+def callback_func(channel):
+    if GPIO.input(23) == 0:
+        print("Lichtschranke aktiv")
+    else:
+        print("Lichtschranke unterbrochen")
+
+
+def on_connect(client, userdata, flags, rc):
+    client.publish("connected")
+
+# Functions
+
+
+def init():
+    GPIO.setmode(GPIO.BCM)  # gpio direct pcb read mode
+    GPIO.setwarnings(False)  # disable gpio warnings
+    GPIO.setup(RECEIVER_PIN, GPIO.IN)  # sets mode of specific pin
+    GPIO.add_event_detect(RECEIVER_PIN, GPIO.BOTH,
+                          callback=callback_func, bouncetime=500)  # event listener
+    client.on_connect = on_connect  # publish "connected" on connect
+    client.connect("104.45.70.122", 1883, 60)
+    client.loop_start()
+
+
+def run():
+    sleep(1)
