@@ -1,9 +1,51 @@
-import RPi.GPIO as GPIO
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt  # mqtt message module
+import RPi.GPIO as GPIO  # GPIO module
+import os
 from time import sleep
 import RPi.GPIO as GPIO
-import os
 import time
+import sys
+from hx711 import HX711
+
+hx = HX711(5, 6)
+weight_diff_tolerance = 0.2
+weight_multiplier = 2
+
+
+def cleanAndExit():
+    GPIO.cleanup()
+    sys.exit()
+
+
+def setup():
+    hx.set_offset(7995659.1875)
+    hx.set_scale(-26.866)
+
+
+def loop():
+    try:
+        val = hx.get_grams()
+        hx.power_down()
+        # mqtt part start
+        #
+        if abs(val-last_val) < weight_diff_tolerance:
+            client.publish("test/pi", val * weight_multiplier)
+            time.sleep(1)
+            hx.power_up()
+            last_val = val
+        #
+        # mqtt part end
+    except (KeyboardInterrupt, SystemExit):
+        cleanAndExit()
+
+
+# weight sensor only
+
+if __name__ == "__main__":
+    setup()
+    while True:
+        loop()
+
 
 RECEIVER_PIN = 23
 client = mqtt.Client()
@@ -41,6 +83,9 @@ def run():
 
 if __name__ == '__main__':
     init()
+    setup()
+    while True:
+        loop()
     try:
         while True:
             run()
