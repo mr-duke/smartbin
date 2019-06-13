@@ -41,7 +41,9 @@ def sendSensorData():
         "gyro_x":gyro.get_accel_data()['x'], 
         "gyro_y":gyro.get_accel_data()['y'],
         "gyro_z":gyro.get_accel_data()['z'],
-        "distance":distance()
+        "distance":distance(),
+        "timestamp":"-1",
+        "weight":"-1"
     }
     client.publish("smartbin", json.dumps(data))
 
