@@ -1,0 +1,8 @@
+{
+    "timestamp":"YYYY-MM-DD'T'HH:MM:SS:MSMS'z'",
+    "weight": "1050g",
+    "gyro_x": "2345",
+    "gyro_y": "4538",
+    "gyro_z": "2048",
+    "distance": "53"
+}
