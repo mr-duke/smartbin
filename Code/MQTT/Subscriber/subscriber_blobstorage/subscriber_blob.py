@@ -4,17 +4,18 @@ import json
 import uuid
 
 SERVER = "infmqtt.westeurope.azurecontainer.io"
+TOPIC = "smartbin"
 
-blob = blob.Blob('smartbin')
+blob = blob.Blob(TOPIC)
 
 
 def send_to_blob(data):
-    print("Send to blob : " + data)
+    print("Send to blob: " + data)
     blob.write_data_to_blob(data)
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
-    client.subscribe("XXXXXXX")
+    client.subscribe(TOPIC)
 
 def on_message(client, userdata, msg):
     b = str(msg.payload.decode("utf-8"))
