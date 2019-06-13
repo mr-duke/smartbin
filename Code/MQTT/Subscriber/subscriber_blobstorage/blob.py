@@ -15,5 +15,4 @@ class Blob():
     def write_data_to_blob(self,data):
         
         self.blob_service.create_blob_from_text(self.container_name, str(uuid.uuid4()), data)
-        # self.blob_service.create_blob_from_text(self.container_name, "charly", data)
     
