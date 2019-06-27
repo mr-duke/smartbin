@@ -8,7 +8,7 @@ import json
 from mpu6050 import mpu6050
 from time import sleep
 
-gyro = mpu6050(0x68)
+#gyro = mpu6050(0x68)
 
 ##while True:
 ##    accel_data = gyro.get_accel_data()
@@ -29,9 +29,11 @@ gyro = mpu6050(0x68)
 ##    sleep(0.5)
 
 
-
+INDICATOR_RED = 17
+INDICATOR_GREEN = 27
 RECEIVER_PIN = 23
 client = mqtt.Client()
+
 
 # Event handler
 
@@ -60,6 +62,8 @@ def sendSensorData():
 def init(): #sent on GPIO state change
     GPIO.setmode(GPIO.BCM)  # gpio direct pcb read mode
     GPIO.setwarnings(False)  # disable gpio warnings
+    GPIO.setup(INDICATOR_RED, GPIO.OUT) #indicator led
+    GPIO.setup(INDICATOR_GREEN, GPIO.OUT) #indicator led
     GPIO.setup(RECEIVER_PIN, GPIO.IN)  # sets mode of specific pin
     GPIO.add_event_detect(RECEIVER_PIN, GPIO.BOTH,
                           callback=callback_func, bouncetime=20)  # event listener, bounce time = time to sleep till next event handle
@@ -70,9 +74,23 @@ def init(): #sent on GPIO state change
 
 if __name__ == '__main__':
     init()
+    GPIO.output(INDICATOR_RED, GPIO.LOW)
+    GPIO.output(INDICATOR_GREEN, GPIO.LOW)
+    i = 0
     try:
         while True: # sends json every x seconds
-            
+            GPIO.output(INDICATOR_RED, GPIO.LOW)
+            GPIO.output(INDICATOR_GREEN, GPIO.LOW)
+##            for i in range(1,100):
+##                sleep(1)
+##                if i % 2 == 0:
+##                    GPIO.output(INDICATOR_GREEN, 1)
+##                else:
+##                    GPIO.output(INDICATOR_GREEN, 0)
+##                if i % 2 == 1:
+##                    GPIO.output(INDICATOR_RED, 1)
+##                else:
+##                    GPIO.output(INDICATOR_RED, 0)
             sleep(1)
     except KeyboardInterrupt:
         print("stopped by user")
