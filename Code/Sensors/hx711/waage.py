@@ -12,8 +12,8 @@ def cleanAndExit():
 
 
 def setup():
-    hx.set_offset(7995659.1875)
-    hx.set_scale(-26.866)
+    hx.set_offset(7967722.875)
+    hx.set_scale(-1.33)
 
 
 def loop():

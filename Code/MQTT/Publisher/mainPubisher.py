@@ -5,12 +5,11 @@ import os
 import time
 import json
 
-from mpu6050 import mpu6050
+#from mpu6050 import mpu6050
 from time import sleep
 
 # DEFINITIONS
 #gyro = mpu6050(0x68)
-client = mqtt.Client()
 
 ##while True:
 ##    accel_data = gyro.get_accel_data()
@@ -30,15 +29,19 @@ client = mqtt.Client()
 ##    print("Temp: " + str(temp) + " C")
 ##    sleep(0.5)
 
+client = mqtt.Client()
+MQTT_TOPIC = "smartbin"
 
 #GPIO DEFINITIONS
 
 INDICATOR_RED = 17
 INDICATOR_GREEN = 27
 LIGHTSENSOR_PIN = 23
+GPIO_TRIGGER = 18
+GPIO_ECHO = 24
 
 #STATES
-LIGHTSENSOR_STATE = ""
+LID_STATE = ""
 FILL_STATE = 0
 
 
@@ -48,26 +51,25 @@ FILL_STATE = 0
 
 
 def on_connect(client, userdata, flags, rc):
-    client.publish("connected")
+    print("connected")
 
 
 
 # Functions
 
-def sendSensorData(): 
+def sendSensorData():
+    print("anfang")
+    print("LID: " + LID_STATE)
     data = {
-        "lid":getLidState(),
+        "lid":str(LID_STATE),
         "getDistance":getDistance(),
-        "timestamp":timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-
-        # "gyro_x":gyro.get_accel_data()['x'], 
-        # "gyro_y":gyro.get_accel_data()['y'],
-        # "gyro_z":gyro.get_accel_data()['z']
+        "timestamp":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
-    client.publish(json.dumps(x))
-    # print(json)
+    client.publish(MQTT_TOPIC, json.dumps(data))
+    print(json.dumps(data))
 
 def init(): #sent on GPIO state change
+    print("init")
     GPIO.setmode(GPIO.BCM)  # gpio direct pcb read mode
     GPIO.setwarnings(False)  # disable gpio warnings
     #GPIO Pins
@@ -84,7 +86,10 @@ def init(): #sent on GPIO state change
     GPIO.add_event_detect(LIGHTSENSOR_PIN, GPIO.BOTH, callback=getLidState
 , bouncetime=20)  # event listener, bounce time = time to sleep till next event handle
     client.on_connect = on_connect  # publish "connected" on connect
-    client.connect("104.45.70.122", 1883, 60)
+    getLidState("hello")
+    print(LID_STATE)
+    print("connecting")
+    client.connect("infmqtt.westeurope.azurecontainer.io", 1883, 60)
     client.loop_start()
 
 def getDistance():
@@ -111,24 +116,34 @@ def getDistance():
     getDistance = (TimeElapsed * 34300) / 2
 
     Height = 40 #cm
-    FILL_PERCENTAGE = (1 - (getDistance / Height)
+    FILL_PERCENTAGE = (1 - (getDistance / Height))
     if FILL_PERCENTAGE < 0:
         FILL_PERCENTAGE = 0
+    print(round((FILL_PERCENTAGE*100)))
     setLedIndicator(round((FILL_PERCENTAGE*100)))
     return getDistance
 
 
 def setLedIndicator(fillPercentage):
-    GPIO.PWM(INDICATOR_RED, fillPercentage;
-    GPIO.PWM(INDICATOR_GREEN, 100-fillPercentage);
+    GPIO.PWM(INDICATOR_RED, fillPercentage + 0.001)
+    GPIO.PWM(INDICATOR_GREEN, 100-fillPercentage + 0.001)
 
-def getLidState(channel):
-    if GPIO.input(23) == 0:
-        #zu
-        LIGHTSENSOR_STATE = "closed"
-    else:
-        #offen
-        LIGHTSENSOR_STATE = "open"
+def getLidState(param):
+    print("got into function, ")
+    print("GPIO Light " + str(GPIO.input(23)))
+    global LID_STATE
+    try:
+        if GPIO.input(23) == 0:
+            print("offen")
+            #offen
+            
+            LID_STATE = "open"
+        else:
+            #zu
+            print("zu")
+            LID_STATE = "closed"
+    except Exception as e:
+        print(e)
 
 
 
@@ -137,6 +152,9 @@ if __name__ == '__main__':
     i = 0
     try:
         while True: # sends json every x seconds
+            getLidState("helloMain")
+            sendSensorData()
+            sleep(1)
 ##            for i in range(1,100):
 ##                sleep(1)
 ##                if i % 2 == 0:
@@ -147,11 +165,6 @@ if __name__ == '__main__':
 ##                    GPIO.output(INDICATOR_RED, 1)
 ##                else:
 ##                    GPIO.output(INDICATOR_RED, 0)
-            
-
-
-            sendSensorData()
-            sleep(1)
     except KeyboardInterrupt:
         print("stopped by user")
     GPIO.cleanup()
