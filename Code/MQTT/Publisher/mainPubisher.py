@@ -42,7 +42,8 @@ GPIO_ECHO = 24
 
 #STATES
 LID_STATE = ""
-FILL_STATE = 0
+FILL_PERCENTAGE = 0
+
 
 
 # Event handler
@@ -61,30 +62,44 @@ def sendSensorData():
     print("anfang")
     print("LID: " + LID_STATE)
     data = {
-        "lid":str(LID_STATE),
-        "getDistance":getDistance(),
-        "timestamp":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        "Lid":LID_STATE,
+        "Distance":getDistance(),
+        "FillPercentage":FILL_PERCENTAGE,
+        "Timestamp":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
+    if LID_STATE == "open":
+       data["Distance"] = -1
+       data["FillPercentage"] = -1
     client.publish(MQTT_TOPIC, json.dumps(data))
     print(json.dumps(data))
 
 def init(): #sent on GPIO state change
     print("init")
+
     GPIO.setmode(GPIO.BCM)  # gpio direct pcb read mode
     GPIO.setwarnings(False)  # disable gpio warnings
+
     #GPIO Pins
     GPIO.setup(INDICATOR_RED, GPIO.OUT) #indicator led
     GPIO.setup(INDICATOR_GREEN, GPIO.OUT) #indicator led
-    GPIO.setup(LIGHTSENSOR_PIN
-, GPIO.IN)  # sets mode of specific pin
+    GPIO.setup(LIGHTSENSOR_PIN, GPIO.IN)  # sets mode of specific pin
     GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
     GPIO.setup(GPIO_ECHO, GPIO.IN)
+
+    #indicator
+    global red
+    red = GPIO.PWM(INDICATOR_RED, 100)
+    global green
+    green = GPIO.PWM(INDICATOR_GREEN, 100)
+
+    red.start(100)
+    green.start(100)
+    
     #GPIO Output Sets/Resets
-    GPIO.output(INDICATOR_RED, GPIO.LOW) # Indicator Reset
-    GPIO.output(INDICATOR_GREEN, GPIO.LOW) # Indicator Reset
+    #GPIO.output(INDICATOR_RED, GPIO.LOW) # Indicator Reset
+    #GPIO.output(INDICATOR_GREEN, GPIO.LOW) # Indicator Reset
     #Misc
-    GPIO.add_event_detect(LIGHTSENSOR_PIN, GPIO.BOTH, callback=getLidState
-, bouncetime=20)  # event listener, bounce time = time to sleep till next event handle
+    #GPIO.add_event_detect(LIGHTSENSOR_PIN, GPIO.BOTH, callback=getLidState, bouncetime=20)  # event listener, bounce time = time to sleep till next event handle
     client.on_connect = on_connect  # publish "connected" on connect
     getLidState("hello")
     print(LID_STATE)
@@ -113,20 +128,24 @@ def getDistance():
     TimeElapsed = StopZeit - StartZeit # Zeit Differenz zwischen Start und Ankunft
     # mit der Schallgeschwindigkeit (34300 cm/s) multiplizieren
     # und durch 2 teilen, da hin und zurueck
-    getDistance = (TimeElapsed * 34300) / 2
+    getDistance = int(round((TimeElapsed * 34300) / 2))
 
     Height = 40 #cm
-    FILL_PERCENTAGE = (1 - (getDistance / Height))
+    global FILL_PERCENTAGE
+    FILL_PERCENTAGE = int(round((1 - (getDistance / Height))*100))
     if FILL_PERCENTAGE < 0:
         FILL_PERCENTAGE = 0
-    print(round((FILL_PERCENTAGE*100)))
-    setLedIndicator(round((FILL_PERCENTAGE*100)))
+    if FILL_PERCENTAGE >= 90:
+        FILL_PERCENTAGE = 99
+    print(FILL_PERCENTAGE)
+    setLedIndicator(FILL_PERCENTAGE)
     return getDistance
 
 
 def setLedIndicator(fillPercentage):
-    GPIO.PWM(INDICATOR_RED, fillPercentage + 0.001)
-    GPIO.PWM(INDICATOR_GREEN, 100-fillPercentage + 0.001)
+    print("fill percentage in setLEDFunction ---  " + str(fillPercentage))
+    red.ChangeDutyCycle(fillPercentage + 0.0001)
+    green.ChangeDutyCycle(100-fillPercentage)
 
 def getLidState(param):
     print("got into function, ")
