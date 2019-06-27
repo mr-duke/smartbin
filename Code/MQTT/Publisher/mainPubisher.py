@@ -5,30 +5,9 @@ import os
 import time
 import json
 from hx711 import HX711
-
-#from mpu6050 import mpu6050
 from time import sleep
 
 # DEFINITIONS
-#gyro = mpu6050(0x68)
-
-##while True:
-##    accel_data = gyro.get_accel_data()
-##    gyro_data = gyro.get_gyro_data()
-##    temp = gyro.get_temp()
-##
-##    print("Accelerometer data")
-##    print("x: " + str(accel_data['x']))
-##    print("y: " + str(accel_data['y']))
-##    print("z: " + str(accel_data['z']))
-##
-##    print("Gyroscope data")
-##    print("x: " + str(gyro_data['x']))
-##    print("y: " + str(gyro_data['y']))
-##    print("z: " + str(gyro_data['z']))
-##
-##    print("Temp: " + str(temp) + " C")
-##    sleep(0.5)
 
 client = mqtt.Client()
 MQTT_TOPIC = "smartbin"
@@ -57,8 +36,6 @@ def on_connect(client, userdata, flags, rc):
 # Functions
 
 def sendSensorData():
-    print("anfang")
-    print("LID: " + LID_STATE)
     data = {
         "Lid":LID_STATE,
         "Distance":getDistance(),
@@ -94,17 +71,11 @@ def init(): #sent on GPIO state change
     red.start(100)
     green.start(100)
     
-    #GPIO Output Sets/Resets
-    #GPIO.output(INDICATOR_RED, GPIO.LOW) # Indicator Reset
-    #GPIO.output(INDICATOR_GREEN, GPIO.LOW) # Indicator Reset
-    #Misc
-    #GPIO.add_event_detect(LIGHTSENSOR_PIN, GPIO.BOTH, callback=getLidState, bouncetime=20)  # event listener, bounce time = time to sleep till next event handle
     client.on_connect = on_connect  # publish "connected" on connect
     getLidState("hello")
-    print(LID_STATE)
 
-    hx.set_offset(7967722.875)
-    hx.set_scale(-1.33)
+    hx.set_offset(7967413.5)
+    hx.set_scale(-1.3103896103896104)
     
     print("connecting")
     client.connect("infmqtt.westeurope.azurecontainer.io", 1883, 60)
@@ -142,7 +113,6 @@ def getDistance():
         FILL_PERCENTAGE = 99
     elif FILL_PERCENTAGE >= 50:
         FILL_PERCENTAGE += 10
-    print(FILL_PERCENTAGE)
     setLedIndicator(FILL_PERCENTAGE)
     return getDistance
 
@@ -155,23 +125,17 @@ def getWeight():
     return WEIGHT
 
 def setLedIndicator(fillPercentage):
-    print("fill percentage in setLEDFunction ---  " + str(fillPercentage))
     red.ChangeDutyCycle(fillPercentage + 0.0001)
     green.ChangeDutyCycle(100-fillPercentage)
 
 def getLidState(param):
-    print("got into function, ")
-    print("GPIO Light " + str(GPIO.input(23)))
     global LID_STATE
     try:
         if GPIO.input(23) == 0:
-            print("offen")
             #offen
-            
             LID_STATE = "open"
         else:
             #zu
-            print("zu")
             LID_STATE = "closed"
     except Exception as e:
         print(e)
