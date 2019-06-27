@@ -4,6 +4,7 @@ from time import sleep
 import os
 import time
 import json
+from hx711 import HX711
 
 #from mpu6050 import mpu6050
 from time import sleep
@@ -32,6 +33,8 @@ from time import sleep
 client = mqtt.Client()
 MQTT_TOPIC = "smartbin"
 
+PUBLISHING_INTERVAL = 1
+
 #GPIO DEFINITIONS
 
 INDICATOR_RED = 17
@@ -44,17 +47,12 @@ GPIO_ECHO = 24
 LID_STATE = ""
 FILL_PERCENTAGE = 0
 
-
-
-# Event handler
-
-
-
+#weight
+hx = HX711(5, 6)
+WEIGHT = 0
 
 def on_connect(client, userdata, flags, rc):
     print("connected")
-
-
 
 # Functions
 
@@ -65,6 +63,7 @@ def sendSensorData():
         "Lid":LID_STATE,
         "Distance":getDistance(),
         "FillPercentage":FILL_PERCENTAGE,
+        "Weight":getWeight(),
         "Timestamp":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
     if LID_STATE == "open":
@@ -103,6 +102,10 @@ def init(): #sent on GPIO state change
     client.on_connect = on_connect  # publish "connected" on connect
     getLidState("hello")
     print(LID_STATE)
+
+    hx.set_offset(7967722.875)
+    hx.set_scale(-1.33)
+    
     print("connecting")
     client.connect("infmqtt.westeurope.azurecontainer.io", 1883, 60)
     client.loop_start()
@@ -137,10 +140,19 @@ def getDistance():
         FILL_PERCENTAGE = 0
     if FILL_PERCENTAGE >= 90:
         FILL_PERCENTAGE = 99
+    elif FILL_PERCENTAGE >= 50:
+        FILL_PERCENTAGE += 10
     print(FILL_PERCENTAGE)
     setLedIndicator(FILL_PERCENTAGE)
     return getDistance
 
+def getWeight():
+    global WEIGHT
+    WEIGHT = int(round(hx.get_grams()))
+    hx.power_down()
+    time.sleep(.001)
+    hx.power_up()
+    return WEIGHT
 
 def setLedIndicator(fillPercentage):
     print("fill percentage in setLEDFunction ---  " + str(fillPercentage))
@@ -168,22 +180,13 @@ def getLidState(param):
 
 if __name__ == '__main__':
     init()
-    i = 0
+
     try:
         while True: # sends json every x seconds
             getLidState("helloMain")
             sendSensorData()
-            sleep(1)
-##            for i in range(1,100):
-##                sleep(1)
-##                if i % 2 == 0:
-##                    GPIO.output(INDICATOR_GREEN, 1)
-##                else:
-##                    GPIO.output(INDICATOR_GREEN, 0)
-##                if i % 2 == 1:
-##                    GPIO.output(INDICATOR_RED, 1)
-##                else:
-##                    GPIO.output(INDICATOR_RED, 0)
+            sleep(PUBLISHING_INTERVAL)
+
     except KeyboardInterrupt:
         print("stopped by user")
     GPIO.cleanup()
