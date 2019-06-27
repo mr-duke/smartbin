@@ -10,14 +10,19 @@ from time import sleep
 
 gyro = mpu6050(0x68)
 
+GPIO.setmode(GPIO.BCM)
+#GPIO.setwarnings(False)
+
 # GPIO Pins zuweisen
 GPIO_TRIGGER = 18
 GPIO_ECHO = 24
+RECEIVER_PIN = 23
 
 # Richtung der GPIO-Pins festlegen (IN / OUT)
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
 GPIO.setup(GPIO_ECHO, GPIO.IN)
-RECEIVER_PIN = 23
+
+#MQTT
 client = mqtt.Client()
 
 # Event handler
@@ -36,16 +41,30 @@ def on_connect(client, userdata, flags, rc):
 # Functions
 
 
-def sendSensorData(): 
+def sendSensorData():
+
+    gyrox = gyro.get_accel_data()['x']
+    gyroy = gyro.get_accel_data()['y']
+    gyroz = gyro.get_accel_data()['z']
+    dist = distance()
+    timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    
     data = {
-        "gyro_x":gyro.get_accel_data()['x'], 
-        "gyro_y":gyro.get_accel_data()['y'],
-        "gyro_z":gyro.get_accel_data()['z'],
-        "distance":distance(),
-        "timestamp":"-1",
+        "gyro_x":gyrox, 
+        "gyro_y":gyroy,
+        "gyro_z":gyroz,
+        "distance":dist,
+        "timestamp":timestamp,
         "weight":"-1"
     }
-    client.publish("smartbin", json.dumps(data))
+    try:
+        jsonString = json.dumps(data)
+        print("printing json")
+        client.publish("smartbin", jsonString)
+        print(jsonString)
+    except Exception as jsonNotSent:
+        print("Json file failed to be sent")
+        
 
 def init(): #sent on GPIO state change
     GPIO.setmode(GPIO.BCM)  # gpio direct pcb read mode
@@ -87,14 +106,17 @@ def distance():
 
 
 
-
+interval = 0.5
 
 if __name__ == '__main__':
     init()
     try:
         while True: # sends json every x seconds
-            sendSensorData()
-            sleep(1)
+            try:
+                sendSensorData()
+            except Exception as SendException:
+                print(SendException)
+            sleep(interval)
     except KeyboardInterrupt:
         print("stopped by user")
     GPIO.cleanup()

@@ -10,23 +10,23 @@ from time import sleep
 
 gyro = mpu6050(0x68)
 
-while True:
-    accel_data = gyro.get_accel_data()
-    gyro_data = gyro.get_gyro_data()
-    temp = gyro.get_temp()
-
-    print("Accelerometer data")
-    print("x: " + str(accel_data['x']))
-    print("y: " + str(accel_data['y']))
-    print("z: " + str(accel_data['z']))
-
-    print("Gyroscope data")
-    print("x: " + str(gyro_data['x']))
-    print("y: " + str(gyro_data['y']))
-    print("z: " + str(gyro_data['z']))
-
-    print("Temp: " + str(temp) + " C")
-    sleep(0.5)
+##while True:
+##    accel_data = gyro.get_accel_data()
+##    gyro_data = gyro.get_gyro_data()
+##    temp = gyro.get_temp()
+##
+##    print("Accelerometer data")
+##    print("x: " + str(accel_data['x']))
+##    print("y: " + str(accel_data['y']))
+##    print("z: " + str(accel_data['z']))
+##
+##    print("Gyroscope data")
+##    print("x: " + str(gyro_data['x']))
+##    print("y: " + str(gyro_data['y']))
+##    print("z: " + str(gyro_data['z']))
+##
+##    print("Temp: " + str(temp) + " C")
+##    sleep(0.5)
 
 
 
