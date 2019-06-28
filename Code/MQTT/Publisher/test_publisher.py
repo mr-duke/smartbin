@@ -16,7 +16,7 @@ client.loop_start()
 for i in range(100):
     time.sleep(2)
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    message =  f"""[
+    message =  f"""
 {{
 "weight" : {i},
 "distance" :98.6,
@@ -25,5 +25,5 @@ for i in range(100):
 "gyro_z" :98.6,
 "timestamp" :"{timestamp}"
 }}
-]"""
+"""
     client.publish("smartbin", message)
