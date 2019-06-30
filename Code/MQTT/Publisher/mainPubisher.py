@@ -24,6 +24,7 @@ GPIO_ECHO = 24
 
 #STATES
 LID_STATE = ""
+LID_BOOL = 0
 FILL_PERCENTAGE = 0
 
 #weight
@@ -38,6 +39,7 @@ def on_connect(client, userdata, flags, rc):
 def sendSensorData():
     data = {
         "Lid":LID_STATE,
+        "LidBool":LID_BOOL,
         "Distance":getDistance(),
         "FillPercentage":FILL_PERCENTAGE,
         "MaxPercentage":100,
@@ -105,15 +107,15 @@ def getDistance():
     # und durch 2 teilen, da hin und zurueck
     getDistance = int(round((TimeElapsed * 34300) / 2))
 
-    Height = 40 #cm
+    Height = 35 #cm
     global FILL_PERCENTAGE
     FILL_PERCENTAGE = int(round((1 - (getDistance / Height))*100))
     if FILL_PERCENTAGE < 0:
-        FILL_PERCENTAGE = 0
-    if FILL_PERCENTAGE >= 90:
-        FILL_PERCENTAGE = 99
-    elif FILL_PERCENTAGE >= 50:
-        FILL_PERCENTAGE += 10
+        FILL_PERCENTAGE = 100
+##    if FILL_PERCENTAGE >= 90:
+##        FILL_PERCENTAGE = 99
+##    elif FILL_PERCENTAGE >= 50:
+##        FILL_PERCENTAGE += 10
     setLedIndicator(FILL_PERCENTAGE)
     return getDistance
 
@@ -126,18 +128,26 @@ def getWeight():
     return WEIGHT
 
 def setLedIndicator(fillPercentage):
-    red.ChangeDutyCycle(fillPercentage + 0.0001)
-    green.ChangeDutyCycle(100-fillPercentage)
+    dutycycle = fillPercentage
+    if dutycycle <= 0:
+        dutycycle += 0.001
+    if dutycycle >= 100:
+        dutycycle -= 0.001
+    red.ChangeDutyCycle(dutycycle)
+    green.ChangeDutyCycle(100-dutycycle)
 
 def getLidState(param):
     global LID_STATE
+    global LID_BOOL
     try:
         if GPIO.input(23) == 0:
             #offen
             LID_STATE = "open"
+            LID_BOOL = 1
         else:
             #zu
             LID_STATE = "closed"
+            LID_BOOL = 0
     except Exception as e:
         print(e)
 
