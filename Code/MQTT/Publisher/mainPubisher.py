@@ -40,6 +40,7 @@ def sendSensorData():
         "Lid":LID_STATE,
         "Distance":getDistance(),
         "FillPercentage":FILL_PERCENTAGE,
+        "MaxPercentage":100,
         "Weight":getWeight(),
         "Timestamp":time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     }
