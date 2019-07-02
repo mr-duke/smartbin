@@ -12,7 +12,7 @@ from time import sleep
 client = mqtt.Client()
 MQTT_TOPIC = "smartbin"
 
-PUBLISHING_INTERVAL = 1
+PUBLISHING_INTERVAL = 0.5
 
 #GPIO DEFINITIONS
 
@@ -109,9 +109,12 @@ def getDistance():
 
     Height = 35 #cm
     global FILL_PERCENTAGE
-    FILL_PERCENTAGE = int(round((1 - (getDistance / Height))*100))
-    if FILL_PERCENTAGE < 0:
-        FILL_PERCENTAGE = 100
+    distance = getDistance
+    if distance > 35 and distance < 45:
+        distance = 35
+    FILL_PERCENTAGE = int(round((1 - (distance / Height))*100))
+    if LID_BOOL == 1:
+        FILL_PERCENTAGE = -1
 ##    if FILL_PERCENTAGE >= 90:
 ##        FILL_PERCENTAGE = 99
 ##    elif FILL_PERCENTAGE >= 50:
@@ -129,10 +132,10 @@ def getWeight():
 
 def setLedIndicator(fillPercentage):
     dutycycle = fillPercentage
-    if dutycycle <= 0:
-        dutycycle += 0.001
-    if dutycycle >= 100:
-        dutycycle -= 0.001
+    if dutycycle < 0:
+        dutycycle = 100
+    if dutycycle > 100:
+        dutycycle = 100
     red.ChangeDutyCycle(dutycycle)
     green.ChangeDutyCycle(100-dutycycle)
 
