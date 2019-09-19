@@ -4,6 +4,4 @@
 #### SmartBin
 ##### Die Cloud-Lösung für intelligente Müllentsorgung
 
-<img width="500px" src="https://github.com/mr-duke/smartbin/blob/master/Documents/SmartBin/SmartBin02.jpg"/>
-![SmartBin](https://github.com/mr-duke/smartbin/raw/master/Documents/SmartBin/SmartBin02.jpg)
-
+<img width="500px" src="https://github.com/mr-duke/smartbin/raw/master/Documents/SmartBin/2019.07.06_Projektmesse_Digitalisierung_Hochschule_Rosenheim_Foto_Claus_Rammel_9199.jpg"/>
